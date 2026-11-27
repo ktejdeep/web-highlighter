@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Web Highlighter & Recall",
+  "version": "1.0.0",
+  "description": "Highlight web text, attach sticky notes, search saved fragments, and recall knowledge with auto-jump.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Web Highlighter & Recall Dashboard"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

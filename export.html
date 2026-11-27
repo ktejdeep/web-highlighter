@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export Highlights to PDF - Web Highlighter & Recall</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --paper: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
+    /* Floating No-Print Toolbar */
+    .toolbar {
+      position: sticky;
+      top: 16px;
+      z-index: 100;
+      max-width: 820px;
+      margin: 0 auto 24px auto;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toolbar-info {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    .toolbar-info strong {
+      color: var(--text);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    /* Paper Container Layout */
+    .document-page {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 48px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .doc-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #eff6ff;
+      color: var(--primary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .doc-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .doc-meta-item strong {
+      color: var(--text);
+    }
+
+    /* Website Section */
+    .site-section {
+      margin-bottom: 36px;
+    }
+
+    .site-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .site-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .site-url {
+      font-size: 12px;
+      color: var(--primary);
+      text-decoration: none;
+      word-break: break-all;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    /* Highlight Card */
+    .highlight-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #fafafa;
+      page-break-inside: avoid;
+    }
+
+    .highlight-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .highlight-num {
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .highlight-quote {
+      font-size: 14px;
+      font-style: normal;
+      line-height: 1.6;
+      color: #0f172a;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: inline;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .highlight-note {
+      margin-top: 12px;
+      background: #f0fdf4;
+      border-left: 3px solid #22c55e;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+      color: #166534;
+    }
+
+    .highlight-note-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #15803d;
+      margin-bottom: 3px;
+    }
+
+    /* Print Stylesheet */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      .document-page {
+        max-width: 100% !important;
+        width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 20px 30px !important;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .site-section {
+        page-break-inside: auto;
+      }
+      .highlight-card {
+        page-break-inside: avoid;
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Toolbar -->
+  <div class="toolbar no-print">
+    <div class="toolbar-info">
+      <strong>PDF Export Preview</strong> &bull; <span id="exportSummaryText">Preparing highlights...</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-secondary" onclick="window.close()">Close</button>
+      <button class="btn btn-primary" id="printPdfBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Save as PDF / Print
+      </button>
+    </div>
+  </div>
+
+  <!-- Document Paper Body -->
+  <div class="document-page">
+    <div class="doc-header">
+      <div class="doc-badge">Web Highlighter & Recall</div>
+      <h1 class="doc-title" id="docMainTitle">Curated Study & Research Highlights</h1>
+      <div class="doc-meta">
+        <div class="doc-meta-item">Scope: <strong id="docScope">Current Page</strong></div>
+        <div class="doc-meta-item">Order: <strong id="docOrder">Appearance Order</strong></div>
+        <div class="doc-meta-item">Total Highlights: <strong id="docCount">0</strong></div>
+        <div class="doc-meta-item">Generated: <strong id="docDate">-</strong></div>
+      </div>
+    </div>
+
+    <div id="contentContainer">
+      <!-- Dynamic Highlight Cards Render Here -->
+    </div>
+  </div>
+
+  <script src="export.js"></script>
+</body>
+</html>
